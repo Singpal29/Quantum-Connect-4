@@ -38,13 +38,23 @@ class Node:
     self.untried_moves.remove(move)
     return child
 
-  def simulate(self):
+  def simulateGreedy(self):
     temp = self.game.copy()
     moves = temp.legal_moves()
     while len(moves) > 0:
-      temp.apply(random.choice(moves))
+      greedy_move(temp)
       moves = temp.legal_moves()
     return temp.winner
+
+  def simulate(self):
+      temp = self.game.copy()
+      moves = temp.legal_moves()
+      while len(moves) > 0:
+        temp.apply(random.choice(moves))
+        moves = temp.legal_moves()
+      return temp.winner
+
+  
     
 
   def backpropogate(self, winner):
@@ -59,7 +69,7 @@ class Node:
         break
       curr = curr.parent
 
-  def search(self, iterations):
+  def search(self, iterations, greedy = False):
     for i in range(iterations):
       curr = self
       while (len(curr.untried_moves) == 0 and not curr.game.gameOver):
@@ -67,8 +77,12 @@ class Node:
 
       if len(curr.untried_moves) > 0:
         curr = curr.expand()
+
+      if (greedy):
+        winner = curr.simulateGreedy()
+      else:
+        winner = curr.simulate()
       
-      winner = curr.simulate()
       curr.backpropogate(winner)
 
     most_visits = -1
@@ -78,6 +92,38 @@ class Node:
         best_child = child
         most_visits = child.visited
     return best_child.move_here
+
+
+def greedy_move(game):
+    curr_player = game.curr_player
+    moves = game.legal_moves()
+    for i in game.legal_moves():
+      tempGame = game.copy()
+      tempGame.apply(i)
+      if (tempGame.winner == curr_player):
+        game.apply(i)
+        return
+    random.shuffle(moves)
+    for move in moves:
+      tempGame = game.copy()
+      tempGame.apply(move)
+      if (tempGame.gameOver): 
+        if (tempGame.winner == 2):
+          game.apply(move)
+          return
+        continue
+
+      losing = False
+      for j in tempGame.legal_moves():
+        tempGame2 = tempGame.copy()
+        tempGame2.apply(j)
+        if (tempGame2.winner == -1 * curr_player):
+          losing = True
+          break
+      if not losing:
+        game.apply(move)
+        return
+    game.apply(moves[0])
   
     
 

@@ -41,18 +41,21 @@ def trainMCTS():
 
 
 
-def random_game(game, swap):
+def random_game(game, swap, j):
   count = 0 if not swap else 1
   
   while game.winner == 0 and count < 500:
-    
+    #print(count)
     if count % 2 == 0: 
       root = MCTS.Node(game=game.copy())
       #print("MCTS move")
-      game.apply(root.search(500))
+      game.apply(root.search(5000))
     else: 
+      root = MCTS.Node(game=game.copy())
+      #print("MCTS Greedy move")
+      game.apply(root.search(100, True))
       #print("Random move")
-      greedy_move(game)
+      #greedy_move(game)
       #game.apply(random.choice(game.legal_moves()))
     #check_invariants(game)
     count+=1
@@ -79,29 +82,52 @@ def main():
   game = engine.Game()
   redWins = 0
   greenWins = 0
-  draws = 0
+  
   start = time.perf_counter()
-  first_player = [0, 0]
-  for i in range(100):
-    res = random_game(game, i % 2)
-    if (res == 1): 
-      redWins += 1
-      if (i % 2 == 0):
-        first_player[0] += 1
-      
+  '''
+  root = MCTS.Node(game=game.copy())
+  game.apply(root.search(5000))
+  one = time.perf_counter() - start
+  print(one)
+  start = time.perf_counter()
+  root = MCTS.Node(game=game.copy())
+  game.apply(root.search(100, True))
+  two = time.perf_counter() - start
+  print(two)
+  print(two / one)
+  return
+  '''
+  for j in range(1):
+    draws = 0
+    first_player = [0, 0]
+    second_player = [0, 0]
+    for i in range(10):
+      res = random_game(game, i % 2, j + 1)
+      if (res == 1): 
+        redWins += 1
+        if (i % 2 == 0):
+          first_player[0] += 1
+        else:
+          second_player[1] += 1
+        
 
-    elif (res == 2): 
-      draws += 1
-    else: 
-      greenWins += 1
-      if (i % 2 == 1):
-        first_player[1] += 1
-    game = engine.Game()
-  elapsed = time.perf_counter() - start
-  print(first_player)
-  print(redWins)
-  print(greenWins)
-  print(draws)
-  print(elapsed)
+      elif (res == 2): 
+        draws += 1
+      else: 
+        greenWins += 1
+        if (i % 2 == 1):
+          first_player[1] += 1
+        else:
+          second_player[0] += 1
+      game = engine.Game()
+    elapsed = time.perf_counter() - start
+    
+    print(first_player)
+    print(second_player)
+  #print(redWins)
+  #print(greenWins)
+    print(draws)
+    print(elapsed)
+
 if __name__ == "__main__":
   main()

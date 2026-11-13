@@ -220,6 +220,48 @@ class Game:
         for c in r:
           print(c, end = " ")
         print()
+
+  def encode(self):
+    p1_real = []
+    p2_real = []
+    p1_quantum = []
+    p2_quantum = []
+    quantum_row = []
+    quantum_column = []
+    for r in range(rows):
+      p1_real.append([0] * cols)
+      p2_real.append([0] * cols)
+      p1_quantum.append([0] * cols)
+      p2_quantum.append([0] * cols)
+      quantum_column.append([-1] * cols)
+      quantum_row.append([-1] * cols)
+
+    rows_dict = {}
+    col_dict = {}
+    for r in range(rows):
+      for c in range(cols):
+        if self.owner_board[r][c] == self.curr_player and self.ghost_board[r][c] == -1:
+          p1_real[r][c] = 1
+        elif self.owner_board[r][c] == -1 * self.curr_player and self.ghost_board[r][c] == -1:
+          p2_real[r][c] = 1
+        elif self.owner_board[r][c] == self.curr_player:
+          p1_quantum[r][c] = 1
+        elif self.owner_board[r][c] == -1 * self.curr_player:
+          p2_quantum[r][c] = 1
+        if self.ghost_board[r][c] != -1:
+          if (self.ghost_board[r][c] in rows_dict):
+            quantum_row[r][c] = rows_dict.get(self.ghost_board[r][c])/(rows - 1)
+            quantum_column[r][c] = col_dict.get(self.ghost_board[r][c])/(cols - 1)
+            quantum_row[rows_dict.get(self.ghost_board[r][c])][col_dict.get(self.ghost_board[r][c])] = r/(rows - 1)
+            quantum_column[rows_dict.get(self.ghost_board[r][c])][col_dict.get(self.ghost_board[r][c])] = c/(cols - 1)
+          else:
+            rows_dict[self.ghost_board[r][c]] = r
+            col_dict[self.ghost_board[r][c]] = c
+    return (p1_real, p2_real, p1_quantum, p2_quantum, quantum_row, quantum_column)
+
+    
+
+        
     
 
 def main():
@@ -227,7 +269,22 @@ def main():
   
   print(game.legal_moves())
   game.apply(55)
-  game.print_board()
+  #game.print_board()
+  print()
+  for matrix in game.encode():
+    for r in matrix:
+      for c in r:
+        print(c, end = " ")
+      print()
+    print()
+  game.apply(6)
+  print()
+  for matrix in game.encode():
+    for r in matrix:
+      for c in r:
+        print(c, end = " ")
+      print()
+    print()
   #print()
   #game.apply(62)
   #game.print_board()
