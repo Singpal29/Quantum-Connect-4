@@ -1,8 +1,9 @@
-import az_MCTS
-import engine
+import qc4.az_MCTS as az_MCTS
+import qc4.engine as engine
 import random
-import model
+import qc4.model as model
 import time
+import config
 
 
 def self_play_game(net, iterations, explore_moves = 10):
@@ -13,7 +14,7 @@ def self_play_game(net, iterations, explore_moves = 10):
   turn = []
   while not root.gameOver:
     mcts = az_MCTS.Node(root.copy())
-    move, visit_counts = mcts.search(iterations, net)
+    move, visit_counts = mcts.search(net, iterations)
     total = sum(visit_counts)
     search_policy = [x / total for x in visit_counts]
     if explore_moves:
@@ -37,7 +38,7 @@ def self_play_game(net, iterations, explore_moves = 10):
   return examples
   
 def main():
-  net = model.Model(engine.rows, engine.cols)
+  net = model.Model(config.ROWS, config.COLS)
   start = time.perf_counter()
   examples = self_play_game(net, 200)
   print(f"time = {time.perf_counter() - start}")

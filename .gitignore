@@ -2,4 +2,7 @@
 *.pt
 *.pkl
 *.txt
-*.csv
+*.pyc
+/qc4/__pycache__
+/runs/*
+

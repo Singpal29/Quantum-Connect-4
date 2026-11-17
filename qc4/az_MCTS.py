@@ -1,9 +1,9 @@
 import math
 import random
-import model
+import qc4.model as model
 import torch
-
-import engine
+import config
+import qc4.engine as engine
 
 C = 1.5
 
@@ -52,7 +52,7 @@ class Node:
       curr = curr.parent
       if (curr is None): break
     
-  def search(self, iterations = 500, net = model.Model(engine.rows, engine.cols)):
+  def search(self, net, iterations = 500):
     
     for i in range(iterations):
       curr = self
@@ -72,7 +72,7 @@ class Node:
 
     most_visits = -1
     best_child = None
-    visit_counts = [0] * (engine.cols + engine.cols * engine.rows + (engine.cols * (engine.cols + 1)) // 2)
+    visit_counts = [0] * config.NUM_ACTIONS
 
     for child in self.children:
       visit_counts[child.move_here] += child.visited
@@ -100,38 +100,7 @@ class Node:
 
       
 
-'''
-def greedy_move(game):
-    curr_player = game.curr_player
-    moves = game.legal_moves()
-    for i in game.legal_moves():
-      tempGame = game.copy()
-      tempGame.apply(i)
-      if (tempGame.winner == curr_player):
-        game.apply(i)
-        return
-    random.shuffle(moves)
-    for move in moves:
-      tempGame = game.copy()
-      tempGame.apply(move)
-      if (tempGame.gameOver): 
-        if (tempGame.winner == 2):
-          game.apply(move)
-          return
-        continue
 
-      losing = False
-      for j in tempGame.legal_moves():
-        tempGame2 = tempGame.copy()
-        tempGame2.apply(j)
-        if (tempGame2.winner == -1 * curr_player):
-          losing = True
-          break
-      if not losing:
-        game.apply(move)
-        return
-    game.apply(moves[0])
-'''
 
 def main():
   game = engine.Game(True)
@@ -139,7 +108,7 @@ def main():
   game.owner_board[5][5] = 1
   game.owner_board[5][4] = 1
   node = Node(game)
-  print(node.search(100)[1])
+  print(node.search(model.Model(config.ROWS, config.COLS), 100)[1])
 
 
 

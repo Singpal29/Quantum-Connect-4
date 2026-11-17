@@ -1,8 +1,8 @@
-import engine
+import qc4.engine as engine
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import config
 
 
 
@@ -17,7 +17,7 @@ class Model(nn.Module):
 
     flat_size = channels * rows * cols
 
-    num_actions = cols + cols * rows + (cols * (cols + 1)) // 2
+    num_actions = config.NUM_ACTIONS
 
     self.policy_fc = nn.Linear(flat_size, num_actions)
 
@@ -48,7 +48,7 @@ def main():
   x = torch.tensor(game.encode(), dtype=torch.float32)   # shape (6, rows, cols)
   x = x.unsqueeze(0)                                     # add batch dim → (1, 6, rows, cols)
 
-  net = Model(engine.rows, engine.cols)
+  net = Model(config.ROWS, config.COLS)
   policy, value = net(x)
   print(policy)
   print(value)

@@ -1,5 +1,4 @@
-rows = 6
-cols = 7
+import config
 
 class Game:
   def __init__(self, new = True):
@@ -11,9 +10,9 @@ class Game:
     self.winner = 0
     self.id_tracker = 0
     if new:
-      for r in range(rows):
-        self.owner_board.append([0, 0, 0, 0, 0, 0, 0])
-        self.ghost_board.append([-1, -1, -1, -1, -1, -1, -1])
+      for r in range(config.ROWS):
+        self.owner_board.append([0] * config.COLS)
+        self.ghost_board.append([-1] * config.COLS)
   
 
 
@@ -26,7 +25,7 @@ class Game:
     copy_game.id_tracker = self.id_tracker
     copy_game.gameOver = self.gameOver
     copy_game.winner = self.winner
-    for r in range(rows):
+    for r in range(config.ROWS):
       copy_game.owner_board.append(list.copy(self.owner_board[r]))
       copy_game.ghost_board.append(list.copy(self.ghost_board[r]))
     return copy_game
@@ -49,14 +48,14 @@ class Game:
     draw = True
     winner1 = False
     winner2 = False
-    for r in range(rows):
+    for r in range(config.ROWS):
       if (not draw): break
-      for c in range(cols):
+      for c in range(config.COLS):
         if (self.ghost_board[r][c] != -1 or self.owner_board[r][c] == 0): 
           draw = False
           break
-    for r in range(rows):
-      for c in range(cols - 3):
+    for r in range(config.ROWS):
+      for c in range(config.COLS - 3):
         if self.owner_board[r][c] != 0 and self.ghost_board[r][c] == -1 :
           if (
             self.owner_board[r][c] == self.owner_board[r][c + 1]
@@ -71,8 +70,8 @@ class Game:
             else:
               winner2 = True
         
-    for c in range(cols):
-        for r in range(rows - 3):
+    for c in range(config.COLS):
+        for r in range(config.ROWS - 3):
           if self.owner_board[r][c] != 0 and self.ghost_board[r][c] == -1 :
             if (
               self.owner_board[r][c] == self.owner_board[r + 1][c]
@@ -87,8 +86,8 @@ class Game:
               else:
                 winner2 = True
           
-    for c in range(cols - 3):
-          for r in range(rows - 3):
+    for c in range(config.COLS - 3):
+          for r in range(config.ROWS - 3):
             if self.owner_board[r][c] != 0 and self.ghost_board[r][c] == -1 :
               if (
                 self.owner_board[r][c] == self.owner_board[r + 1][c + 1]
@@ -102,8 +101,8 @@ class Game:
                   winner1 = True
                 else:
                   winner2 = True
-    for c in range(3, cols):
-          for r in range(rows - 3):
+    for c in range(3, config.COLS):
+          for r in range(config.ROWS - 3):
             if self.owner_board[r][c] != 0 and self.ghost_board[r][c] == -1 :
               if (
                 self.owner_board[r][c] == self.owner_board[r + 1][c - 1]
@@ -120,39 +119,29 @@ class Game:
     self.setWinner(winner1, winner2, draw)
 
 
-  '''
-  Moves:
-  0-6: place in columns 0-6 respectively
-  7-49:
-  row is (move // 7) - 1
-  col is mov % 7
-  If quantum piece in space, observe it and turn it into a real piece, destroy its linked piece
-  and shift everything down
-  50-76:
-  Place quantum pieces in Columns 
-  '''
+  
   def apply(self, move):
     if self.gameOver: return
     #Place Real
-    if (move < cols):
-      for r in reversed(range(rows)):
+    if (move < config.COLS):
+      for r in reversed(range(config.ROWS)):
         if (self.owner_board[r][move] == 0):
           self.owner_board[r][move] = self.curr_player
           self.curr_player = -1 * self.curr_player
           break
     #Observe Quantum
-    elif move < 42 + cols:
-      row = move // cols - 1
-      col = (move) % cols
+    elif move < config.COLS * config.ROWS + config.COLS:
+      row = move // config.COLS - 1
+      col = (move) % config.COLS
       id = self.ghost_board[row][col]
       if id == -1:
         return
       self.ghost_board[row][col] = -1
       breaker = False
-      for r in range(rows):
+      for r in range(config.ROWS):
         if breaker:
           break
-        for c in range(cols):
+        for c in range(config.COLS):
           if (self.ghost_board[r][c] == id):
             for k in reversed(range(1, r + 1)):
               self.owner_board[k][c] = self.owner_board[k - 1][c]
@@ -165,17 +154,17 @@ class Game:
     #Place Quantum
     else:
       first = 0
-      move -= 42 + cols
-      while move >= cols - first:
-        move -= cols - first
+      move -= config.COLS * config.ROWS + config.COLS
+      while move >= config.COLS - first:
+        move -= config.COLS - first
         first += 1
       move += first
-      for r in reversed(range(rows)):
+      for r in reversed(range(config.ROWS)):
         if (self.owner_board[r][move] == 0):
           self.owner_board[r][move] = self.curr_player
           self.ghost_board[r][move] = self.id_tracker
           break
-      for r in reversed(range(rows)):
+      for r in reversed(range(config.ROWS)):
         if (self.owner_board[r][first] == 0):
           self.owner_board[r][first] = self.curr_player
           self.ghost_board[r][first] = self.id_tracker
@@ -189,20 +178,20 @@ class Game:
     if self.gameOver: return []
     valid_moves = []
     count = 0
-    for c in range(cols):
+    for c in range(config.COLS):
       if self.owner_board[0][c] == 0:
         valid_moves.append(c)
-      for r in range(c, cols):
+      for r in range(c, config.COLS):
         if c == r and self.owner_board[1][c] == 0:
-          valid_moves.append(49 + (count))
+          valid_moves.append(config.COLS * config.ROWS + config.COLS + (count))
         elif self.owner_board[0][c] == 0 and self.owner_board[0][r] == 0 and c != r:
-          valid_moves.append(49 + (count))
+          valid_moves.append(config.COLS * config.ROWS + config.COLS + (count))
         count += 1
 
-    for r in range(rows):
-      for c in range(cols):
+    for r in range(config.ROWS):
+      for c in range(config.COLS):
         if self.ghost_board[r][c] != -1:
-          valid_moves.append((r * 7 + c) + 7)
+          valid_moves.append((r * config.COLS + c) + config.COLS)
     valid_moves.sort()
     return valid_moves
     #for move in valid_moves:
@@ -228,18 +217,18 @@ class Game:
     p2_quantum = []
     quantum_row = []
     quantum_column = []
-    for r in range(rows):
-      p1_real.append([0] * cols)
-      p2_real.append([0] * cols)
-      p1_quantum.append([0] * cols)
-      p2_quantum.append([0] * cols)
-      quantum_column.append([-1] * cols)
-      quantum_row.append([-1] * cols)
+    for r in range(config.ROWS):
+      p1_real.append([0] * config.COLS)
+      p2_real.append([0] * config.COLS)
+      p1_quantum.append([0] * config.COLS)
+      p2_quantum.append([0] * config.COLS)
+      quantum_column.append([-1] * config.COLS)
+      quantum_row.append([-1] * config.COLS)
 
     rows_dict = {}
     col_dict = {}
-    for r in range(rows):
-      for c in range(cols):
+    for r in range(config.ROWS):
+      for c in range(config.COLS):
         if self.owner_board[r][c] == self.curr_player and self.ghost_board[r][c] == -1:
           p1_real[r][c] = 1
         elif self.owner_board[r][c] == -1 * self.curr_player and self.ghost_board[r][c] == -1:
@@ -250,10 +239,10 @@ class Game:
           p2_quantum[r][c] = 1
         if self.ghost_board[r][c] != -1:
           if (self.ghost_board[r][c] in rows_dict):
-            quantum_row[r][c] = rows_dict.get(self.ghost_board[r][c])/(rows - 1)
-            quantum_column[r][c] = col_dict.get(self.ghost_board[r][c])/(cols - 1)
-            quantum_row[rows_dict.get(self.ghost_board[r][c])][col_dict.get(self.ghost_board[r][c])] = r/(rows - 1)
-            quantum_column[rows_dict.get(self.ghost_board[r][c])][col_dict.get(self.ghost_board[r][c])] = c/(cols - 1)
+            quantum_row[r][c] = rows_dict.get(self.ghost_board[r][c])/(config.ROWS - 1)
+            quantum_column[r][c] = col_dict.get(self.ghost_board[r][c])/(config.COLS - 1)
+            quantum_row[rows_dict.get(self.ghost_board[r][c])][col_dict.get(self.ghost_board[r][c])] = r/(config.ROWS - 1)
+            quantum_column[rows_dict.get(self.ghost_board[r][c])][col_dict.get(self.ghost_board[r][c])] = c/(config.COLS - 1)
           else:
             rows_dict[self.ghost_board[r][c]] = r
             col_dict[self.ghost_board[r][c]] = c

@@ -1,16 +1,16 @@
 import collections
 import random
 import time
-
-import MCTS
-import az_MCTS
-import model
-import selfplay
-import engine
+import qc4.MCTS as MCTS
+import qc4.az_MCTS as az_MCTS
+import qc4.model as model
+import qc4.selfplay as selfplay
+import qc4.engine as engine
 import torch
 import pandas as pd
 import pickle
 import os
+import config
 
 
 def train_step(batch, net, optimizer):
@@ -33,9 +33,9 @@ def generation(net, optimizer, buffer, iterations = 200, games = 25, steps = 200
   
   for i in range(games):
     buffer.extend(selfplay.self_play_game(net, iterations))
-  with open("buffer_tmp.pkl", "wb") as f:
+  with open(f"runs/run{config.RUN}/buffer_tmp.pkl", "wb") as f:
     pickle.dump(list(buffer), f)
-  os.replace("buffer_tmp.pkl", "buffer.pkl")
+  os.replace(f"runs/run{config.RUN}/buffer_tmp.pkl", f"runs/run{config.RUN}/buffer.pkl")
   policy_losses = []
   value_losses = []
   for i in range(steps):
@@ -48,78 +48,32 @@ def generation(net, optimizer, buffer, iterations = 200, games = 25, steps = 200
     "policy_loss_avg": sum(policy_losses) / len(policy_losses),
     "value_losses_avg": sum(value_losses) / len(value_losses)
   }
-  torch.save(net.state_dict(), f"generations/gen_{count}.pt")
-  torch.save(optimizer.state_dict(), f"optimizer.pt")
+  torch.save(net.state_dict(), f"runs/run{config.RUN}/generations/gen_{count}.pt")
+  torch.save(optimizer.state_dict(), f"runs/run{config.RUN}/optimizer.pt")
   print(f"generation {count} complete")
   return loss_data
   
-def play_game(net, count = 500, search1 = 500, search2 = 500, swap = False):
-  game = engine.Game()
-  tracker = 1 if swap else 0
-  while game.winner == 0 and tracker < count:
-    if tracker % 2 == 0: 
-      root = MCTS.Node(game=game.copy())
-      game.apply(root.search(search1))
-    else: 
-      root = az_MCTS.Node(game=game.copy())
-      move, visits = root.search(search2, net)
-      game.apply(move)
-    tracker += 1
-  assert game.winner != 0, "Time Out"
-  return game.winner
 
-def evaluate(gen_count, df):
-  
-  net = model.Model(engine.rows, engine.cols)
-  net.load_state_dict(torch.load(f"generations/gen_{gen_count}.pt"))
-  draws = 0
-  az_mcts = [0, 0]
-  mcts = [0, 0]
-  for i in range(100):
-    res = play_game(net, 500, 500, 500, i % 2 == 0)
-    if (res == 1): 
-      if (i % 2 == 0):
-        az_mcts[0] += 1
-      else:
-        mcts[1] += 1
-    elif (res == 2): 
-      draws += 1
-    else: 
-      if (i % 2 == 1):
-        az_mcts[1] += 1
-      else:
-        mcts[0] += 1
-  new_row = pd.DataFrame([{
-    "Generation": gen_count,
-    "Net First": az_mcts[0],
-    "Net Second": az_mcts[1],
-    "MCTS First": mcts[1],
-    "MCTS Second": mcts[0],
-    "Draws": draws
-  }])
-  print(f"Generation: {gen_count}")
-  print(az_mcts)
-  print(mcts)
-  print(draws)
-  df = pd.concat([df, new_row], ignore_index=True)
-  df.to_csv("results.csv", index = False)
-  return df
-  
+
 
 def main():
+  if os.path.isdir(f"runs/run{config.RUN}"):
+    cont = input("Warning this could potentially overwrite existing generations, continue anyway? Type an explicit YES to continue")
+    if cont != "YES": return
+  os.makedirs(f"runs/run{config.RUN}", exist_ok=True)
+  os.makedirs(f"runs/run{config.RUN}/generations", exist_ok=True)
   start = time.perf_counter()
-  net = model.Model(engine.rows, engine.cols)
+  net = model.Model(config.ROWS, config.COLS)
+  
   optimizer = torch.optim.Adam(net.parameters(), lr = 1e-3)
   buffer = collections.deque(maxlen = 20000)
   rows = []
-  df = pd.DataFrame(columns = ["Generation", "Net First", "Net Second", "MCTS First", "MCTS Second", "Draws"])
-
+  df = pd.DataFrame()
   for i in range(200):
     print(i)
     rows.append(generation(net, optimizer, buffer, games = 50, steps = 200, count = i + 1))
-    pd.DataFrame(rows).to_csv("training_log.csv", index=False)
-    if (i % 5 == 0):
-      df = evaluate(i + 1, df)
+    pd.DataFrame(rows).to_csv(f"runs/run{config.RUN}/training_log.csv", index=False)
+    
   
   print(time.perf_counter() - start)
   

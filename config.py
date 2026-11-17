@@ -1,0 +1,4 @@
+RUN = 1
+ROWS = 6
+COLS = 7
+NUM_ACTIONS = COLS + ROWS * COLS + COLS * (COLS + 1) // 2
